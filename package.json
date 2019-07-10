@@ -1,0 +1,24 @@
+{
+  "name": "energytechnology",
+  "version": "0.0.0",
+  "description": "",
+  "main": "copy.js",
+  "scripts": {
+    "copy_to_mods": "node copy.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/2A5F/EnergyTechnology.git"
+  },
+  "author": "2A5F",
+  "private": true,
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/2A5F/EnergyTechnology/issues"
+  },
+  "homepage": "https://github.com/2A5F/EnergyTechnology#readme",
+  "dependencies": {
+    "fs-extra": "^8.1.0",
+    "trash": "^6.0.0"
+  }
+}
