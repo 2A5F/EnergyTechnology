@@ -16,6 +16,7 @@ local item = {
 local recipe = {
     type = 'recipe',
     name = name,
+    category = 'milling',
     energy_required = 2,
     ingredients = {
         { 'coal', 1 }

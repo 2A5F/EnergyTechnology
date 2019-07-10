@@ -1,5 +1,4 @@
 -- local fireArmor = table.deepcopy(data.raw.armor["heavy-armor"])
-
 -- fireArmor.name = "fire-armor"
 -- fireArmor.icons= {
 --    {
@@ -7,7 +6,6 @@
 --       tint={r=1,g=0,b=0,a=0.3}
 --    },
 -- }
-
 -- fireArmor.resistances = {
 --    {
 --       type = "physical",
@@ -30,16 +28,16 @@
 --       percent = 100
 --    },
 -- }
-
 -- local recipe = table.deepcopy(data.raw.recipe["heavy-armor"])
 -- recipe.enabled = true
 -- recipe.name = "fire-armor"
 -- recipe.ingredients = {{"copper-plate",200},{"steel-plate",50}}
 -- recipe.result = "fire-armor"
-
 -- data:extend{fireArmor,recipe}
 
+local extend = require'utils'.ExtendAll(function(v) return v.item end)
+
 local coal = require 'prototypes.items.powder.coal'
-data:extend {
-   coal.item
-}
+local milling_machine = require 'prototypes.entitys.milling_machine'
+
+extend{coal, milling_machine}
