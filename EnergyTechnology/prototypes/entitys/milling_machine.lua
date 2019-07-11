@@ -20,7 +20,7 @@ local recipe = {
     name = name,
     result = name,
     ingredients = {{'steel-plate', 5}, {'advanced-circuit', 5}},
-    energy_required = 3
+    energy_required = 3,
 }
 local entity = {
     type = 'furnace',
