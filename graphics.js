@@ -6,7 +6,6 @@ const root = './EnergyTechnology/graphics/'
 const { join, extname } = require('path')
 const { readdir, stat } = require('fs-extra')
 
-/** @type {{ ani(path: string): Promise<void> }} */
 const { ani } = require('./ani')
 
 /** @param {string} dir*/

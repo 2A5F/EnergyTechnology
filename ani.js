@@ -4,6 +4,6 @@ async function ani(path) {
     
 }
 
-exports = {
+module.exports = {
     ani
 }
