@@ -6,6 +6,8 @@ const root = './EnergyTechnology/graphics/'
 const { join, extname } = require('path')
 const { readdir, stat } = require('fs-extra')
 
+const { cwdRequire } = require('./cwdRequire')
+
 const { ani } = require('./ani')
 
 /** @param {string} dir*/
@@ -36,6 +38,17 @@ function isJs({path, state}) {
     return state.isFile() && extname(path) === '.js'
 }
 
+/** @param {string} path * @param {any} data */
+async function checkData(path, data) {
+    if (data == null || typeof data != 'object') return
+    if (data.type == null || typeof data.type != 'string') return
+    switch (data.type) {
+        case 'animation': await ani(path, data); break
+    }
+}
+
 (async () => {
-    const r = await Promise.all((await findAllJs(root)).map(ani))
+    /** @type {[string, any][]} */
+    const maybeData = await Promise.all((await findAllJs(root)).map(async path => [path, await cwdRequire(path)]))
+    await Promise.all(maybeData.map(d => checkData(...d)))
 })()
