@@ -4,6 +4,7 @@
   "description": "",
   "main": "copy.js",
   "scripts": {
+    "graphics": "node graphics.js",
     "copy_to_mods": "node copy.js"
   },
   "repository": {
@@ -18,6 +19,7 @@
   },
   "homepage": "https://github.com/2A5F/EnergyTechnology#readme",
   "dependencies": {
+    "canvas": "^2.5.0",
     "fs-extra": "^8.1.0",
     "trash": "^6.0.0"
   }

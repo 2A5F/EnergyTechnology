@@ -7,6 +7,11 @@
             "type": "npm",
             "script": "copy_to_mods",
             "problemMatcher": []
+        },
+        {
+            "type": "npm",
+            "script": "graphics",
+            "problemMatcher": []
         }
     ]
 }
