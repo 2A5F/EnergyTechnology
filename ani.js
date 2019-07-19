@@ -73,12 +73,13 @@ function calcClosest(count) {
 }
 
 const { dirname } = require('path')
-// const { createCanvas, loadImage } = require('canvas')
+const { ipcRenderer } = require('electron')
 
 /** @param {string} path * @param {Template} data */
 async function Merge(path, data) {
     const dir = dirname(path)
     console.log(dir)
+    console.log(document)
 }
 
 /** @param {string} dir * @param {Ani} Ani */
@@ -86,6 +87,6 @@ async function toMerge(dir, Ani) {
 
 }
 
-module.exports = {
-    ani
-}
+ipcRenderer.on('do', (_, path, data) => {
+    ani(path, data)
+})

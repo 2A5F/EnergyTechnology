@@ -8,8 +8,6 @@ const { readdir, stat } = require('fs-extra')
 
 const { cwdRequire } = require('./cwdRequire')
 
-const { ani } = require('./ani')
-
 /** @param {string} dir*/
 async function findAllJs(dir) {
     /** @type {string[]} */
@@ -33,22 +31,23 @@ async function findAllJs(dir) {
     return arr
 }
 
+const execPath = require('electron')
+const { fork } = require('child_process')
+
 /** @param {Status} */
 function isJs({path, state}) {
     return state.isFile() && extname(path) === '.js'
 }
 
-/** @param {string} path * @param {any} data */
-async function checkData(path, data) {
-    if (data == null || typeof data != 'object') return
-    if (data.type == null || typeof data.type != 'string') return
-    switch (data.type) {
-        case 'animation': await ani(path, data); break
-    }
-}
-
 (async () => {
     /** @type {[string, any][]} */
     const maybeData = await Promise.all((await findAllJs(root)).map(async path => [path, await cwdRequire(path)]))
-    await Promise.all(maybeData.map(d => checkData(...d)))
+
+    await new Promise(res => {
+        const child = fork('./eni.js', [], {
+            execPath
+        })
+        child.send(maybeData)
+        child.on('exit', res)
+    })
 })()
