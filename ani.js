@@ -5,7 +5,12 @@
 /** @type {Template} */
 const template = {
     graphics: './graphics/',
-    outdir: './'
+    outdir: './',
+    filename: '<name>.<count pad={start,4}>.png',
+    // filename dsl
+    // tag: name, count, direc
+    // attr: pad={start, :number}, pad={end, :number}
+    // direc attr: name={front, :string}, name={back, :string}, name={left, :string}, name={right, :string}
 }
 /** @type {Ani} */
 const aniTemplate = {
@@ -18,10 +23,29 @@ const aniTemplate = {
 
 /** @param {string} path * @param {Template} data */
 async function ani(path, data) {
+    if (typeof data !== 'object') throw `[${path}]\tData not a object`
+    if (isObject(data.front)) data.front = SetTemplate(aniTemplate, data.front)
+    if (isObject(data.back)) data.back = SetTemplate(aniTemplate, data.back)
+    if (isObject(data.left)) data.left = SetTemplate(aniTemplate, data.left)
+    if (isObject(data.right)) data.right = SetTemplate(aniTemplate, data.right)
+    data = SetTemplate(template, data)
     console.log(path, data)
-
+    await Merge(path, data)
 }
 
+function isObject(obj) {
+    return typeof obj === 'object'
+}
+
+/** @template {Template | Ani} T * @param {T} template * @param {T} obj * @returns {T} */
+function SetTemplate(template, obj) {
+    const a = Object.create(template)
+    return Object.assign(a, obj)
+}
+
+/** `20 ->  [4, 5]`  
+ *  `5  ->  [1, 5]`  
+ *  `16 ->  [4, 4]` */
 /** @param {number} count @returns {[number, number]} `[x, y]`*/
 function calcClosest(count) {
     if (count == Infinity) return [Infinity, Infinity]
@@ -46,6 +70,20 @@ function calcClosest(count) {
     }
     if (min === Infinity) throw 'No factor, no integer solution'
     return out
+}
+
+const { dirname } = require('path')
+// const { createCanvas, loadImage } = require('canvas')
+
+/** @param {string} path * @param {Template} data */
+async function Merge(path, data) {
+    const dir = dirname(path)
+    console.log(dir)
+}
+
+/** @param {string} dir * @param {Ani} Ani */
+async function toMerge(dir, Ani) {
+
 }
 
 module.exports = {
