@@ -17,9 +17,6 @@ async function checkData(path, data) {
     }
 }
 
-/** @type {Map<string, string>} */
-const codePool = new Map()
-
 /** @param {string} mod * @param {string} path * @param {any} data */
 async function doData(mod, path, data) {
     const win = new BrowserWindow({
@@ -28,14 +25,8 @@ async function doData(mod, path, data) {
         }
     })
     win.loadFile('./empty.html')
-    let code
-    if (codePool.has(mod)) code = codePool.get(mod)
-    else {
-        code = await readFile(mod, 'utf8')
-        codePool.set(mod, code)
-    }
     win.webContents.openDevTools()
-    await win.webContents.executeJavaScript(code)
+    await win.webContents.executeJavaScript(`require(${JSON.stringify(`${mod}`)})`)
     win.webContents.send('do', path, data)
     await new Promise(res => win.on('closed', res))
 }
