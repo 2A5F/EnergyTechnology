@@ -317,9 +317,9 @@ function genCode(asts, canCount = false) {
                     } else return []
                 } else {
                     if (di.val === 'start') {
-                        return /** @param {string} text */ text => `${text}`.padStart(val.val, isCount ? '0' :' ')
+                        return /** @param {string} text */ text => `${text}`.padStart(val.val, isCount ? '0' :'_')
                     } else if (di.val === 'end') {
-                        return /** @param {string} text */ text => `${text}`.padEnd(val.val, isCount ? '0' : ' ')
+                        return /** @param {string} text */ text => `${text}`.padEnd(val.val, isCount ? '0' : '_')
                     } else return []
                 }
             } else if (canDirec && name === 'name') {
@@ -330,7 +330,7 @@ function genCode(asts, canCount = false) {
             } else UnknowAttr(name)
         })
         return text => {
-            let rval = text
+            let rval = `${text}`
             for (const fn of newAttr) {
                 rval = fn(rval)
             }
@@ -358,7 +358,7 @@ function genCode(asts, canCount = false) {
     })
 
     return /** @param {Ctx} ctx */ ctx => {
-        return newAst.map(v => typeof v === 'function' ? v(ctx) : v).join('')
+        return newAst.map(v => typeof v === 'function' ? v(ctx) : `${v}`).join('')
     }
 }
 
