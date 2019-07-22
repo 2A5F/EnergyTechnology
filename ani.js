@@ -329,13 +329,7 @@ function genCode(asts, canCount = false) {
                 return /** @param {string} text */ text => dival === text ? val : text
             } else UnknowAttr(name)
         })
-        return text => {
-            let rval = `${text}`
-            for (const fn of newAttr) {
-                rval = fn(rval)
-            }
-            return rval
-        }
+        return text => newAttr.reduce((last, fn) => fn(last), `${text}`)
     }
 
     /** @type {(string | ((ctx: Ctx) => string))[]} */
