@@ -10,7 +10,7 @@ const template = {
     filename: '<name>.<count pad={start,4}>.png',
     // name dsl
     // tag: name, count(only filename), direc
-    // attr: pad={start, :number}, pad={end, :number}
+    // attr: pad={start, :number, ?:string}, pad={end, :number, ?:string}
     // direc attr: name={front, :string}, name={back, :string}, name={left, :string}, name={right, :string}
 }
 /** @type {Ani} */
@@ -79,7 +79,10 @@ const { ipcRenderer } = require('electron')
 /** @param {string} path * @param {Template} data */
 async function Merge(path, data) {
     const dir = dirname(path)
-    parserName(data.filename)
+    const asts = parserName(data.filename)
+    const filename = genCode(asts, true)
+    console.log(filename)
+    console.log(filename({ count: 1, name: 'fuck', direc: 'asd' }))
     if (typeof data.front === 'object') await toMerge(dir, data.front)
     // if (typeof data.back === 'object') await toMerge(dir, data.back)
     // if (typeof data.left === 'object') await toMerge(dir, data.left)
@@ -108,9 +111,6 @@ function parserName(name) {
     let nowAttr = null
     /** @type {AstParam} */
     let nowParam = null
-    function UnknowType() {
-        throw new TypeError('Unknow Type')
-    }
     function finish(ast = null) {
         asts.push(now)
         now = ast
@@ -278,8 +278,98 @@ function parserName(name) {
         }
     }
     if (now != null) finish()
-    console.log(asts)
+    return asts
 }
+
+/** @param {ReturnType<parserName>} asts @param {boolean} canCount  */
+function genCode(asts, canCount = false) {
+    /** @typedef {{name: string[], endname: boolean, startparam: boolean, params: AstParam[]}} AstAttr */
+    /** @typedef {{type: 'id' | 'stringS' | 'stringD',, text: string[]}} AstParam */
+    /** @typedef {{name: string, count: string, direc: string}} Ctx */
+
+    /** @param {AstParam[]} params @returns {({type: 'string': val: string} | {type: 'id', val: string} | {type: 'number', val: number})[]} */
+    function checkParam(params) {
+        return params.map(param => {
+            if (param.type === 'stringD' || param.type === 'stringS') {
+                return { type: 'string', val: param.text.join('') }
+            } else if(param.type === 'id') {
+                const id = param.text.join('')
+                const num = parseFloat(id)
+                if (isNaN(num)) return { type: 'id', val: id }
+                else return { type: 'number', val: num }
+            } else UnknowParam(param.type)
+        })
+    }
+
+    /** @param {AstAttr[]} attrs @returns {(text: string) => string} */
+    function genAttr(attrs, isCount = false, canDirec = false) {
+        /** @type {((text: string) => string)[]} */
+        const newAttr = attrs.flatMap(attr => {
+            const name = attr.name.join('')
+            if (name === 'pad') {
+                const [di, val, str] = checkParam(attr.params)
+                if (di == null || di.type !== 'id' || val == null || val.type !== 'number') return []
+                if (str != null && str.type === 'string') {
+                    if (di.val === 'start') {
+                        return /** @param {string} text */ text => `${text}`.padStart(val.val, str.val)
+                    } else if (di.val === 'end') {
+                        return /** @param {string} text */ text => `${text}`.padEnd(val.val, str.val)
+                    } else return []
+                } else {
+                    if (di.val === 'start') {
+                        return /** @param {string} text */ text => `${text}`.padStart(val.val, isCount ? '0' :' ')
+                    } else if (di.val === 'end') {
+                        return /** @param {string} text */ text => `${text}`.padEnd(val.val, isCount ? '0' : ' ')
+                    } else return []
+                }
+            } else if (canDirec && name === 'name') {
+                const [di, val] = checkParam(attr.params)
+                if (di == null || di.type !== 'id' || val == null || val.type !== 'number') return []
+                const dival = di.val
+                return /** @param {string} text */ text => dival === text ? val : text
+            } else UnknowAttr(name)
+        })
+        return text => {
+            let rval = text
+            for (const fn of newAttr) {
+                rval = fn(rval)
+            }
+            return rval
+        }
+    }
+
+    /** @type {(string | ((ctx: Ctx) => string))[]} */
+    const newAst = asts.map(ast => {
+        if (ast.type === 'text') {
+            return ast.text.join('')
+        } else if (ast.type === 'tag') {
+            const name = ast.name.join('')
+            if (name === 'name') {
+                const attr = genAttr(ast.attrs)
+                return ({ name }) => attr(name)
+            } else if (canCount && name === 'count') {
+                const attr = genAttr(ast.attrs, true)
+                return ({ count }) => attr(count)
+            } else if (name === 'direc') {
+                const attr = genAttr(ast.attrs, false, true)
+                return ({ direc }) => attr(direc)
+            } else UnknowTag(name)
+        } else UnknowType(ast.type)
+    })
+
+    return /** @param {Ctx} ctx */ ctx => {
+        return newAst.map(v => typeof v === 'function' ? v(ctx) : v).join('')
+    }
+}
+
+/** @param {string} type @returns {never} */
+function UnknowType(type) { throw new TypeError(`Unknow Type [${type}]`) }
+/** @param {string} tag @returns {never} */
+function UnknowTag(tag) { throw new TypeError(`Unknow Tag [${tag}]`) }
+/** @param {string} attr @returns {never} */
+function UnknowAttr(attr) { throw new TypeError(`Unknow Attr [${attr}]`) }
+/** @param {string} param @returns {never} */
+function UnknowParam(param) { throw new TypeError(`Unknow Param Type [${param}]`) }
 
 ipcRenderer.on('do', async (_, path, data) => {
     await ani(path, data)
