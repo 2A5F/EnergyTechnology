@@ -9,7 +9,7 @@ module.exports = {
         height: '50%'
     },
     back: {
-        from: 41,
+        from: 42,
         to: 62,
         point: '↙',
         width: '100%',

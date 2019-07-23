@@ -1,5 +1,5 @@
 
-const { app, BrowserWindow } = require('electron')
+const { app, BrowserWindow, ipcMain } = require('electron')
 const { readFile } = require('fs-extra')
 
 process.on('message', /** @param {[string, any][]} maybeData */ async maybeData => {
@@ -26,6 +26,9 @@ async function doData(mod, path, data) {
     })
     win.loadFile('./empty.html')
     win.webContents.openDevTools()
+    win.webContents.on('console-message', (e, level, msg, line, sourceid) => {
+        console.log(`[${mod}](${level})`, msg)
+    })
     await win.webContents.executeJavaScript(`require(${JSON.stringify(`${mod}`)})`)
     win.webContents.send('do', path, data)
     await new Promise(res => win.on('closed', res))

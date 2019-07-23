@@ -1,13 +1,14 @@
 /** @typedef {string | number} ImgPoint */
 /** @typedef {'·'|'←'|'↖'|'↑'|'↗'|'→'|'↘'|'↓'|'↙'} AniPoint */
 /** @typedef {{from:number, to:number, point?:AniPoint, width?: ImgPoint, height?: ImgPoint, x?: ImgPoint, y?: ImgPoint}} Ani */
-/** @typedef {{type: 'animation', name:string, outname?:string, filename?: string, graphics?:string, outdir?:string, front?:Ani, back?:Ani, left?:Ani, right?:Ani}} Template*/
+/** @typedef {{type: 'animation', name:string, outname?:string, filename?: string, graphics?:string, outdir?:string, front?:Ani, back?:Ani, left?:Ani, right?:Ani, savetype: string}} Template*/
 /** @type {Template} */
 const template = {
     graphics: './graphics/',
     outdir: './',
     outname: '<name>.<direc>.png',
     filename: '<name>.<count pad={start,4}>.png',
+    savetype: 'image/png'
     // name dsl
     // tag: name, count(only filename), direc
     // attr: pad={start, :number, ?:string}, pad={end, :number, ?:string}
@@ -15,6 +16,8 @@ const template = {
 }
 /** @type {Ani} */
 const aniTemplate = {
+    from: 0,
+    to: 0,
     point: '·',
     width: 1,
     height: 1,
@@ -73,26 +76,127 @@ function calcClosest(count) {
     return out
 }
 
-const { dirname } = require('path')
+const { dirname, join } = require('path')
 const { ipcRenderer } = require('electron')
+const { writeFile } = require('fs-extra')
+
+const base64Head = /^data:image\/png;base64,/
 
 /** @param {string} path * @param {Template} data */
 async function Merge(path, data) {
     const dir = dirname(path)
-    const asts = parserName(data.filename)
-    const filename = genCode(asts, true)
-    console.log(filename)
-    console.log(filename({ count: 1, name: 'fuck', direc: 'asd' }))
-    if (typeof data.front === 'object') await toMerge(dir, data.front)
-    // if (typeof data.back === 'object') await toMerge(dir, data.back)
-    // if (typeof data.left === 'object') await toMerge(dir, data.left)
-    // if (typeof data.right === 'object') await toMerge(dir, data.right)
+    const graphics = join(dirname(path), data.graphics)
+    const filename = genCode(parserName(data.filename), true)
+    const outname = genCode(parserName(data.outname))
+
+    /** @type {Promise[]} */
+    const async = []
+    if (typeof data.front === 'object') async.push(toMerge(graphics, data.front, count => filename({ name: data.name, direc: 'front', count }), join(dir, outname({ name: data.name, direc: 'front' })), data.savetype))
+    if (typeof data.back === 'object') async.push(toMerge(graphics, data.back, count => filename({ name: data.name, direc: 'back', count }), join(dir, outname({ name: data.name, direc: 'back' })), data.savetype)) 
+    if (typeof data.left === 'object') async.push(toMerge(graphics, data.left, count => filename({ name: data.name, direc: 'left', count }), join(dir, outname({ name: data.name, direc: 'left' })), data.savetype))
+    if (typeof data.right === 'object') async.push(toMerge(graphics, data.right, count => filename({ name: data.name, direc: 'right', count }), join(dir, outname({ name: data.name, direc: 'right' })), data.savetype))
+
+    await Promise.all(async)
 }
 
-/** @param {string} dir * @param {Ani} Ani */
-async function toMerge(dir, Ani) {
+/** @param {string} dir * @param {Ani} Ani * @param {(count: number)=>string} filename * @param {string} outname * @param {string} savetype*/
+async function toMerge(dir, Ani, filename, outname, savetype) {
+    //#region calc data
 
+    /** @type {Promise<HTMLImageElement>[]} */
+    const aimgs = []
+    const Size = calcClosest(Math.abs(Ani.to - Ani.from)), [Width, Height] = Size
+    for (let i = Ani.from; i <= Ani.to; i++) {
+        const name = filename(i)
+        aimgs.push(new Promise(res => {
+            const img = document.createElement('img')
+            img.src = join(dir, name)
+            img.addEventListener('load', () => {
+                res(img)
+            })
+        }))
+    }
+    const imgs = await Promise.all(aimgs)
+    const imgSize = [imgs[0].width, imgs[0].height]
+    const unitSize = [getPixel(Ani.width, imgSize[0]), getPixel(Ani.height, imgSize[1])]
+    const canvasSize = [Width * unitSize[0], Height * unitSize[1]]
+
+    /** @type {CanvasRenderingContext2D} */
+    const ctx = await new Promise(res => {
+        const canvas = document.createElement('canvas')
+        
+        document.body.appendChild(canvas)   // debug
+
+
+        canvas.width = canvasSize[0]
+        canvas.height = canvasSize[1]
+        res(canvas.getContext('2d'))
+    })
+
+    const edge = getEdge(unitSize, [Ani.x, Ani.y], Ani.point, imgSize)
+
+    //#endregion
+
+    //#region draw
+    
+    let left = 0, top = 0
+    for (const img of imgs) {
+        const [x, y, width, height] = [edge[0], edge[1], unitSize[0], unitSize[1]]
+
+        ctx.drawImage(img, x, y, width, height, width * left, height * top, width, height)
+
+        left++
+        if(left >= Width) {
+            left = 0
+            top++
+        }
+    }
+
+    //#endregion
+
+    //#region save
+
+    const url = ctx.canvas.toDataURL(savetype)
+    const base64Data = url.replace(base64Head, '')
+    
+    await writeFile(outname, base64Data, 'base64')
+
+    //#endregion
 }
+
+/** @param {number | string} val * @param {number} base */
+function getPixel(val, base) {
+    if (typeof val === 'number') return Math.round(val * base)
+    const nv = parseFloat(val)
+    if (isNaN(nv)) return nv
+    if(typeof val === 'string') {
+        if (val.length > 1, val[val.length - 1] === '%') {
+            const p = nv / 100
+            return Math.round(p * base)
+        } else if (val.length > 2, val[val.length - 1] === 'x' && val[val.length - 2] === 'p') {
+            return nv
+        }
+    }
+    return Math.round(nv * base)
+}
+
+/** @param {[number, number]} * @param {[number, number]} * @param {AniPoint} point * @param {[number, number]} * @returns {[number,number,number,number]} */
+function getEdge([width, height], [x, y], point, [W, H]) {
+    switch (point) {
+        case '↖': return [x, y, x + width, y + height]
+        case '↗': return [W - x - width, y, W - x, y + height]
+        case '↙': return [x, H - y - height, x + width, H - y]
+        case '↘': return [W - x - width, H - y - height, W - x, H - y]
+        case '←': return [x, Math.floor(H / 2) + y - Math.floor(height / 2), x + width, Math.floor(H / 2) + y + Math.floor(height / 2)]
+        case '↑': return [Math.floor(W / 2) + x - Math.floor(width / 2), y, Math.floor(W / 2) + x + Math.floor(width / 2), y + height]
+        case '→': return [W - x - width, Math.floor(H / 2) + y  - Math.floor(height / 2), W - x, Math.floor(H / 2) + y + Math.floor(height / 2)]
+        case '↓': return [Math.floor(W / 2) + x - Math.floor(width / 2), H - y - height, Math.floor(W / 2) + x + Math.floor(width / 2), H - y]
+        case '·': return [Math.floor(W / 2) + x - Math.floor(width / 2), Math.floor(H / 2) + y - Math.floor(height / 2), Math.floor(W / 2) + x + Math.floor(width / 2), Math.floor(H / 2) + y + Math.floor(height / 2)]
+        default: UnknowType(point)
+    }
+}
+
+//#region Parser
 
 /** @param {string} name */
 function parserName(name) {
@@ -365,7 +469,17 @@ function UnknowAttr(attr) { throw new TypeError(`Unknow Attr [${attr}]`) }
 /** @param {string} param @returns {never} */
 function UnknowParam(param) { throw new TypeError(`Unknow Param Type [${param}]`) }
 
+//#endregion
+
 ipcRenderer.on('do', async (_, path, data) => {
-    await ani(path, data)
-    //window.close()
+    try {
+        await ani(path, data)
+    } catch (e) {
+        new Notification('Error!', {
+            body: e,
+        })
+        console.error(e)
+    } finally {
+        window.close()
+    }
 })
