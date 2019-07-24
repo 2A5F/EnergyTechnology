@@ -38,7 +38,7 @@ local entity = {
         mining_particle = 'shell-particle'
     }, -- 挖掘掉落自身
 
-    collision_box = {{-3, -2}, {3, 2}}, -- 碰撞盒
+    collision_box = {{-2.9, -1.9}, {2.9, 1.9}}, -- 碰撞盒
     selection_box = {{-3, -2}, {3, 2}}, -- 选择盒
 
     max_health = 300, -- 生命值
