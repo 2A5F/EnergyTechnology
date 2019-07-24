@@ -38,8 +38,8 @@ local entity = {
         mining_particle = 'shell-particle'
     }, -- 挖掘掉落自身
 
-    collision_box = {{-1, -1}, {1, 1}}, -- 碰撞盒
-    selection_box = {{-1.3, -1.3}, {1.3, 1.3}}, -- 选择盒
+    collision_box = {{-3, -2}, {3, 2}}, -- 碰撞盒
+    selection_box = {{-3, -2}, {3, 2}}, -- 选择盒
 
     max_health = 300, -- 生命值
     dying_explosion = 'medium-explosion', -- 死亡生成爆炸
@@ -75,43 +75,46 @@ local entity = {
     layers =
       {
         {
-        filename = "__base__/graphics/entity/stone-furnace/stone-furnace.png",
+        filename = "__EnergyTechnology__/graphics/entitys/BallMill.front.png",
         priority = "extra-high",
-        width = 81,
-        height = 64,
-        frame_count = 1,
-        shift = {0.515625, 0.0625},
-        hr_version =
-        {
-          filename = "__base__/graphics/entity/stone-furnace/hr-stone-furnace.png",
-          priority = "extra-high",
-          width = 151,
-          height = 146,
-          frame_count = 1,
-          shift = util.by_pixel(-0.25, 6),
-          scale = 0.5
-          }
+        width = 256,
+        height = 128,
+        frame_count = 44,
+        line_length = 4,
+        animation_speed = 0.25,
+        scale = 1,
+        shift = {0.5, 0.05},
+        -- hr_version =
+        -- {
+        --   filename = "__EnergyTechnology__/graphics/entity/BallMill.front.png",
+        --   priority = "extra-high",
+        --   width = 151,
+        --   height = 146,
+        --   frame_count = 1,
+        --   shift = util.by_pixel(-0.25, 6),
+        --   scale = 0.5
+        --   }
         },
-        {
-        filename = "__base__/graphics/entity/stone-furnace/stone-furnace-shadow.png",
-        priority = "extra-high",
-        width = 81,
-        height = 64,
-        frame_count = 1,
-        draw_as_shadow = true,
-        shift = {0.515625, 0.0625},
-        hr_version =
-        {
-          filename = "__base__/graphics/entity/stone-furnace/hr-stone-furnace-shadow.png",
-          priority = "extra-high",
-          width = 164,
-          height = 74,
-          frame_count = 1,
-          draw_as_shadow = true,
-          shift = util.by_pixel(14.5, 13),
-          scale = 0.5
-          }
-        }
+        -- {
+        -- filename = "__base__/graphics/entity/stone-furnace/stone-furnace-shadow.png",
+        -- priority = "extra-high",
+        -- width = 81,
+        -- height = 64,
+        -- frame_count = 1,
+        -- draw_as_shadow = true,
+        -- shift = {0.515625, 0.0625},
+        -- hr_version =
+        -- {
+        --   filename = "__base__/graphics/entity/stone-furnace/hr-stone-furnace-shadow.png",
+        --   priority = "extra-high",
+        --   width = 164,
+        --   height = 74,
+        --   frame_count = 1,
+        --   draw_as_shadow = true,
+        --   shift = util.by_pixel(14.5, 13),
+        --   scale = 0.5
+        --   }
+        -- }
       }
     },
 }

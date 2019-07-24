@@ -105,7 +105,7 @@ async function toMerge(dir, Ani, filename, outname, savetype) {
 
     /** @type {Promise<HTMLImageElement>[]} */
     const aimgs = []
-    const Size = calcClosest(Math.abs(Ani.to - Ani.from)), [Width, Height] = Size
+    let Size = calcClosest(Math.abs(Ani.to - Ani.from)), [Width, Height] = Size
     for (let i = Ani.from; i <= Ani.to; i++) {
         const name = filename(i)
         aimgs.push(new Promise(res => {
@@ -119,6 +119,10 @@ async function toMerge(dir, Ani, filename, outname, savetype) {
     const imgs = await Promise.all(aimgs)
     const imgSize = [imgs[0].width, imgs[0].height]
     const unitSize = [getPixel(Ani.width, imgSize[0]), getPixel(Ani.height, imgSize[1])]
+    const offset = [getPixel(Ani.x, imgSize[0]), getPixel(Ani.y, imgSize[1])]
+    if(Min(...Size) === Min(...unitSize)) {
+        Size = [Width, Height] = [Height, Width]
+    }
     const canvasSize = [Width * unitSize[0], Height * unitSize[1]]
 
     /** @type {CanvasRenderingContext2D} */
@@ -133,7 +137,7 @@ async function toMerge(dir, Ani, filename, outname, savetype) {
         res(canvas.getContext('2d'))
     })
 
-    const edge = getEdge(unitSize, [Ani.x, Ani.y], Ani.point, imgSize)
+    const edge = getEdge(unitSize, offset, Ani.point, imgSize)
 
     //#endregion
 
@@ -194,6 +198,12 @@ function getEdge([width, height], [x, y], point, [W, H]) {
         case '·': return [Math.floor(W / 2) + x - Math.floor(width / 2), Math.floor(H / 2) + y - Math.floor(height / 2), Math.floor(W / 2) + x + Math.floor(width / 2), Math.floor(H / 2) + y + Math.floor(height / 2)]
         default: UnknowType(point)
     }
+}
+
+/** @param {number} left * @param {number} right * @returns {'left'|'right'} */
+function Min(left, right) {
+    if (left < right) return 'left'
+    else return 'right'
 }
 
 //#region Parser
