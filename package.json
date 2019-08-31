@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/2A5F/EnergyTechnology#readme",
   "dependencies": {
-    "electron": "6.0.6",
+    "electron": "6.0.7",
     "fs-extra": "8.1.0",
     "trash": "6.0.0"
   }
