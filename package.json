@@ -21,6 +21,6 @@
   "dependencies": {
     "electron": "6.1.4",
     "fs-extra": "8.1.0",
-    "trash": "6.1.0"
+    "trash": "6.1.1"
   }
 }
